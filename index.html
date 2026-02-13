@@ -333,10 +333,16 @@
     <div id="toast-area"></div>
 
     <script>
-        // --- GANTI BAGIAN INI ---
-        // Paste URL Web App Anda di bawah ini:
+        // ==========================================
+        // PASTEKAN URL ANDA DI SINI
+        // ==========================================
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz3AahpC4EzIE0aFe8A2oOD7WAlh8j0Qvt3HIzknN2gtCHPVF5kzIwx-x2BOMyaL2qx/exec'; 
-        // --------------------------
+        // ==========================================
+
+        // Cek saat pertama kali buka web, jika URL masih placeholder, beri peringatan
+        if (SCRIPT_URL === 'ISI_DENGAN_URL_WEB_APP_ANDA' || SCRIPT_URL === '') {
+            alert("PERINGATAN PENTING:\n\nAnda belum mengisi URL SCRIPT_URL di dalam kode HTML!\n\n1. Buka file index.html di editor.\n2. Cari tulisan: 'ISI_DENGAN_URL_WEB_APP_ANDA'.\n3. Ganti dengan URL Web App dari Google Apps Script Anda (yang berakhiran /exec).\n4. Simpan dan refresh halaman ini.");
+        }
 
         let airdrops = [];
         let currentFilter = 'all';
@@ -361,7 +367,7 @@
                 if(e.target === modal) closeModal();
             });
 
-            // Load Data via Fetch
+            // Load Data
             loadData();
         });
 
@@ -370,18 +376,27 @@
         async function loadData() {
             try {
                 const response = await fetch(`${SCRIPT_URL}?action=getAirdrops`);
+                
+                // Cek status HTTP
+                if (!response.ok) {
+                    throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
+                }
+
                 const data = await response.json();
                 
-                if(Array.isArray(data)) {
+                // Validasi Data: Pastikan array
+                if (Array.isArray(data)) {
                     airdrops = data;
                     renderProjects();
                 } else {
                     console.error("Format data salah:", data);
-                    document.getElementById('project-list').innerHTML = '<div class="empty-state">Gagal memuat format data.</div>';
+                    throw new Error("Format data dari server salah (Bukan Array).");
                 }
             } catch (e) {
                 console.error("Gagal mengambil data:", e);
-                document.getElementById('project-list').innerHTML = '<div class="empty-state">Gagal koneksi ke Server. Pastikan URL SCRIPT_URL sudah benar.</div>';
+                // Tampilkan pesan error spesifik agar user tahu kenapa gagal
+                alert("GAGAL MEMUAT DATA:\n" + e.message + "\n\nPastikan URL SCRIPT_URL sudah benar dan setting akses Web App adalah 'Anyone'.");
+                document.getElementById('project-list').innerHTML = '<div class="empty-state">Gagal memuat data. Cek Console (F12) untuk detail error.</div>';
             }
         }
 
@@ -391,6 +406,11 @@
                     method: 'POST',
                     body: JSON.stringify({ action: action, ...payload })
                 });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP Error ${response.status}: Gagal mengirim ke server.`);
+                }
+
                 const result = await response.json();
                 return result;
             } catch (e) {
@@ -428,7 +448,7 @@
             const filtered = airdrops.filter(p => currentFilter === 'all' || p.status === currentFilter);
 
             if (filtered.length === 0) {
-                list.innerHTML = '<div class="empty-state">Belum ada data proyek.</div>';
+                list.innerHTML = '<div class="empty-state">Tidak ada data untuk filter ini.</div>';
             } else {
                 filtered.forEach(p => {
                     totalAcc += (p.accounts ? p.accounts.length : 0);
@@ -519,7 +539,7 @@
 
         function removeAccountRow(id) { const row = document.getElementById(id); if(row) row.remove(); }
 
-        // --- SAVE & DELETE FUNCTION ---
+        // --- SAVE & DELETE FUNCTION (Dengan Perbaikan Otomatis Filter 'all') ---
 
         async function saveProject() {
             const id = document.getElementById('p-id').value;
@@ -539,9 +559,13 @@
                 await sendToGAS('saveAirdrop', { project: projectData });
                 showToast('Sukses disimpan!');
                 closeModal();
-                loadData();
+                
+                // Perbaikan: Load ulang data, lalu PAKSA set filter ke 'all'
+                await loadData(); 
+                setFilter('all'); 
+                
             } catch (e) {
-                showToast('Gagal menyimpan', 'danger');
+                alert("GAGAL MENYIMPAN:\n" + e.message + "\n\nData tidak tersimpan. Periksa koneksi internet dan URL Script.");
             }
         }
 
@@ -550,9 +574,10 @@
             try {
                 await sendToGAS('deleteAirdrop', { id: id });
                 showToast('Sukses dihapus', 'danger');
-                loadData();
+                await loadData();
+                setFilter('all');
             } catch (e) {
-                showToast('Gagal menghapus', 'danger');
+                alert("GAGAL MENGHAPUS:\n" + e.message);
             }
         }
 
@@ -563,9 +588,10 @@
                 await sendToGAS('deleteAirdrop', { id: id });
                 showToast('Sukses dihapus', 'danger');
                 closeModal();
-                loadData();
+                await loadData();
+                setFilter('all');
             } catch (e) {
-                showToast('Gagal menghapus', 'danger');
+                alert("GAGAL MENGHAPUS:\n" + e.message);
             }
         }
 
@@ -579,7 +605,12 @@
         }
 
         function setFilter(f) {
-            currentFilter = f; document.querySelectorAll('.filter-chip').forEach(c => { c.classList.remove('active'); if(c.innerText.includes(f) || (f==='all' && c.innerText==='Semua')) c.classList.add('active'); }); renderProjects();
+            currentFilter = f; 
+            document.querySelectorAll('.filter-chip').forEach(c => { 
+                c.classList.remove('active'); 
+                if(c.innerText.includes(f) || (f==='all' && c.innerText==='Semua')) c.classList.add('active'); 
+            }); 
+            renderProjects();
         }
 
         function shorten(str, len=6) { if(!str) return ''; if(str.length <= len) return str; if(str.startsWith('0x')) return str.substring(0,6) + '...' + str.substring(str.length-4); return str.substring(0,len) + '...'; }
