@@ -48,12 +48,40 @@
         
         button { cursor: pointer; pointer-events: auto; }
         
+        /* Header Actions Group */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
         .btn-add-header {
             background: var(--primary); color: white; border: none;
             padding: 0.5rem 1rem; border-radius: var(--radius); 
             display: flex; align-items: center; gap: 0.5rem;
             z-index: 101; position: relative;
+            font-weight: 500;
         }
+
+        /* New Styles for Refresh and Reset */
+        .btn-icon {
+            background: transparent; border: 1px solid var(--border); color: var(--text-muted);
+            width: 36px; height: 36px; border-radius: 8px; 
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.2s;
+        }
+        .btn-icon:hover { color: var(--text-main); border-color: var(--text-main); background: rgba(255,255,255,0.05); }
+
+        .btn-danger-outline {
+            border: 1px solid var(--danger); color: var(--danger); background: transparent;
+            padding: 0.4rem 0.8rem; border-radius: var(--radius); font-size: 0.85rem;
+            cursor: pointer; display: flex; align-items: center; gap: 6px;
+            transition: 0.2s;
+        }
+        .btn-danger-outline:hover { background: rgba(239, 68, 68, 0.1); }
+
+        .spin-anim { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
 
         .container-max { max-width: 1200px; margin: 0 auto; width: 100%; padding: 0 1.5rem; }
         
@@ -224,16 +252,35 @@
             border: none; z-index: 900; cursor: pointer;
         }
         .fab:hover { transform: scale(1.1); }
-        @media(max-width: 600px) { .btn-add-header { display: none; } .fab { display: flex; } }
+        
+        /* Mobile adjustments for new buttons */
+        @media(max-width: 600px) { 
+            .btn-add-header { display: none; } 
+            .btn-danger-outline { display: none; } /* Hide reset on mobile for safety/space */
+            .fab { display: flex; } 
+        }
     </style>
 </head>
 <body>
 
     <header>
         <div class="logo"><i class="fa-solid fa-layer-group"></i> Multi-Airdrop</div>
-        <button type="button" class="btn-add-header" id="btn-new-project">
-            <i class="fa-solid fa-plus"></i> Proyek Baru
-        </button>
+        
+        <div class="header-actions">
+            <!-- Tombol Reset Data -->
+            <button type="button" id="btn-reset" class="btn-danger-outline" title="Hapus Semua Data">
+                <i class="fa-solid fa-trash-can"></i> <span class="desktop-only">Reset</span>
+            </button>
+
+            <!-- Tombol Refresh -->
+            <button type="button" id="btn-refresh" class="btn-icon" title="Refresh Data">
+                <i class="fa-solid fa-rotate-right"></i>
+            </button>
+
+            <button type="button" class="btn-add-header" id="btn-new-project">
+                <i class="fa-solid fa-plus"></i> Proyek Baru
+            </button>
+        </div>
     </header>
 
     <div class="container-max">
@@ -363,6 +410,10 @@
             document.getElementById('btn-save').addEventListener('click', saveProject);
             document.getElementById('btn-del').addEventListener('click', deleteProjectFromModal);
             
+            // New Listeners
+            document.getElementById('btn-refresh').addEventListener('click', refreshData);
+            document.getElementById('btn-reset').addEventListener('click', resetAllData);
+
             modal.addEventListener('click', (e) => {
                 if(e.target === modal) closeModal();
             });
@@ -416,6 +467,41 @@
             } catch (e) {
                 console.error("Gagal mengirim data:", e);
                 throw e;
+            }
+        }
+
+        // --- NEW FUNCTIONALITY ---
+
+        async function refreshData() {
+            const icon = document.querySelector('#btn-refresh i');
+            icon.classList.add('spin-anim');
+            
+            try {
+                await loadData();
+                showToast("Data berhasil diperbarui");
+            } catch (e) {
+                showToast("Gagal refresh data", "danger");
+            } finally {
+                setTimeout(() => {
+                    icon.classList.remove('spin-anim');
+                }, 500);
+            }
+        }
+
+        async function resetAllData() {
+            const confirmation = confirm("PERINGATAN SANGAT BERBAHAYA:\n\nAnda akan menghapus SEMUA proyek dan data akun dari database.\n\nTindakan ini TIDAK DAPAT dibatalkan.\n\nLanjutkan?");
+            
+            if (!confirmation) return;
+
+            try {
+                // Pastikan backend (.gs) Anda menangani action 'resetAll'
+                const res = await sendToGAS('resetAll', {});
+                console.log("Reset response:", res);
+                showToast("Semua data berhasil direset!", "danger");
+                await loadData();
+                setFilter('all');
+            } catch (e) {
+                alert("GAGAL RESET DATA:\n" + e.message + "\n\nPastikan kode Google Apps Script Anda memiliki fungsi untuk menangani 'resetAll'.");
             }
         }
 
@@ -539,8 +625,6 @@
 
         function removeAccountRow(id) { const row = document.getElementById(id); if(row) row.remove(); }
 
-        // --- SAVE & DELETE FUNCTION (Dengan Perbaikan Otomatis Filter 'all') ---
-
         async function saveProject() {
             const id = document.getElementById('p-id').value;
             const name = document.getElementById('p-name').value;
@@ -560,7 +644,6 @@
                 showToast('Sukses disimpan!');
                 closeModal();
                 
-                // Perbaikan: Load ulang data, lalu PAKSA set filter ke 'all'
                 await loadData(); 
                 setFilter('all'); 
                 
