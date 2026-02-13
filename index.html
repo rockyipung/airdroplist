@@ -3,272 +3,588 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Airdrop Hunter (GitHub Version)</title>
+    <title>Airdrop Mass Farming Manager</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
     <style>
         :root {
-            --bg-body: #0f172a; --bg-card: #1e293b; --bg-modal: #1e293b;
-            --text-main: #f1f5f9; --text-muted: #94a3b8; --primary: #6366f1;
-            --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
-            --border: #334155; --radius: 12px;
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --bg-modal: #1e293b;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --twitter: #1DA1F2;
+            --discord: #5865F2;
+            --telegram: #0088cc;
+            --border: #334155;
+            --radius: 12px;
         }
+
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background-color: var(--bg-body); color: var(--text-main); min-height: 100vh; padding-bottom: 80px; }
-        header { background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(10px); padding: 1rem 1.5rem; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+
+        header {
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 1.5rem;
+            position: sticky; top: 0; z-index: 100;
+            border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
         .logo { font-size: 1.25rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 0.5rem; }
+        
+        button { cursor: pointer; pointer-events: auto; }
+        
+        .btn-add-header {
+            background: var(--primary); color: white; border: none;
+            padding: 0.5rem 1rem; border-radius: var(--radius); 
+            display: flex; align-items: center; gap: 0.5rem;
+            z-index: 101; position: relative;
+        }
+
         .container-max { max-width: 1200px; margin: 0 auto; width: 100%; padding: 0 1.5rem; }
-        .btn { cursor: pointer; padding: 0.5rem 1rem; border-radius: 8px; border: none; font-weight: 600; transition: 0.2s; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover { opacity: 0.9; }
-        .btn-danger { background: rgba(239,68,68,0.2); color: var(--danger); border: 1px solid var(--danger); }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; padding: 1.5rem 0; }
+        
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem;
+            padding: 1.5rem 0;
+        }
         .stat-box { background: var(--bg-card); padding: 1rem; border-radius: var(--radius); border: 1px solid var(--border); }
-        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem; padding-bottom: 2rem; }
-        .p-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; }
-        .p-header { padding: 1rem; border-bottom: 1px solid var(--border); display: flex; gap: 10px; align-items: center; }
-        .p-logo { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: #333; }
-        .acc-list { max-height: 250px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 0.5rem; }
-        .acc-row { display: grid; grid-template-columns: 30px 1fr; gap: 10px; padding: 5px; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center; font-size: 0.8rem; }
-        .acc-num { font-weight: bold; color: var(--text-muted); font-size: 0.7rem; }
-        .data-chip { background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; cursor: pointer; margin: 2px; display: inline-flex; align-items: center; gap: 5px; }
-        .data-chip:hover { background: var(--primary); }
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: 0.3s; }
-        .modal.open { opacity: 1; pointer-events: auto; }
-        .modal-content { background: var(--bg-card); width: 90%; max-width: 500px; padding: 20px; border-radius: 12px; max-height: 90vh; overflow-y: auto; }
-        .form-group { margin-bottom: 10px; }
-        .form-label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px; }
-        .form-input { width: 100%; padding: 8px; background: var(--bg-body); border: 1px solid var(--border); color: white; border-radius: 6px; }
-        .fab { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer; }
+        .stat-val { font-size: 1.5rem; font-weight: 700; margin-top: 0.25rem; }
+        .stat-lbl { font-size: 0.8rem; color: var(--text-muted); }
+
+        .filter-scroll {
+            display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 1rem;
+            scrollbar-width: none;
+        }
+        .filter-scroll::-webkit-scrollbar { display: none; }
+        .filter-chip {
+            background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted);
+            padding: 0.4rem 1rem; border-radius: 20px; cursor: pointer; white-space: nowrap; font-size: 0.85rem;
+            user-select: none; pointer-events: auto;
+        }
+        .filter-chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .card-grid {
+            display: grid; grid-template-columns: 1fr; gap: 1.5rem; padding-bottom: 2rem;
+        }
+        @media(min-width: 900px) { .card-grid { grid-template-columns: repeat(2, 1fr); } }
+
+        .p-card {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+            overflow: hidden; display: flex; flex-direction: column;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .p-card:hover { border-color: var(--primary); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+
+        .p-header {
+            padding: 1.25rem; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: flex-start;
+        }
+        .p-title { display: flex; align-items: center; gap: 10px; }
+        .p-logo {
+            width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
+            border: 2px solid var(--border); background: #0f172a;
+        }
+        .p-title h3 { font-size: 1.1rem; font-weight: 600; }
+        .p-meta { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; display: flex; gap: 10px; align-items: center; }
+        .badge { padding: 2px 8px; border-radius: 4px; background: rgba(255,255,255,0.1); font-size: 0.7rem; text-transform: uppercase; font-weight: 600; }
+        .badge.new { background: rgba(59, 130, 246, 0.2); color: var(--info); }
+        .badge.process { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+        .badge.done { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+        .badge.claimed { background: rgba(99, 102, 241, 0.2); color: var(--primary); }
+
+        .acc-list {
+            max-height: 300px; overflow-y: auto; background: rgba(15, 23, 42, 0.4);
+            padding: 0.5rem;
+        }
+        .acc-row {
+            display: grid; grid-template-columns: 40px 1fr; gap: 10px;
+            padding: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.05);
+            align-items: center;
+        }
+        .acc-row:last-child { border-bottom: none; }
+        .acc-num {
+            font-weight: 700; color: var(--text-muted); font-size: 0.8rem;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.2); height: 100%; border-radius: 4px;
+        }
+        .acc-details {
+            display: flex; flex-wrap: wrap; gap: 8px; font-size: 0.75rem;
+        }
+        .data-chip {
+            background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px;
+            display: flex; align-items: center; gap: 4px; cursor: pointer;
+            transition: background 0.2s; color: var(--text-muted);
+            border: 1px solid transparent; pointer-events: auto;
+        }
+        .data-chip:hover { background: rgba(255,255,255,0.1); color: var(--text-main); border-color: var(--primary); }
+        .data-chip i { width: 12px; text-align: center; }
+        .data-chip i.fa-wallet { color: #f59e0b; }
+        .data-chip i.fa-envelope { color: var(--success); }
+        .data-chip i.fa-twitter { color: var(--twitter); }
+        .data-chip i.fa-discord { color: var(--discord); }
+        .data-chip i.fa-telegram { color: var(--telegram); }
+        .val-text { font-family: 'JetBrains Mono', monospace; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .p-footer {
+            padding: 1rem; border-top: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--bg-card);
+        }
+        .p-notes { font-size: 0.8rem; color: var(--text-muted); font-style: italic; }
+        .p-actions button {
+            background: none; border: none; color: var(--text-muted); 
+            padding: 5px; margin-left: 5px; transition: 0.2s; font-size: 1rem; pointer-events: auto;
+        }
+        .p-actions button:hover { color: var(--text-main); transform: scale(1.1); }
+        .p-actions button.del:hover { color: var(--danger); }
+
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000;
+            display: flex; justify-content: center; align-items: center;
+            opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(5px);
+            pointer-events: none; 
+        }
+        .modal-overlay.open { opacity: 1; visibility: visible; pointer-events: auto; }
+        
+        .modal {
+            background: var(--bg-modal); width: 95%; max-width: 700px; max-height: 90vh;
+            border-radius: var(--radius); border: 1px solid var(--border);
+            display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .modal-header { padding: 1.25rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .modal-body { padding: 1.25rem; overflow-y: auto; }
+        .modal-footer { padding: 1.25rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; background: rgba(0,0,0,0.2); }
+
+        .form-row { margin-bottom: 1rem; }
+        .form-label { display: block; margin-bottom: 0.4rem; font-size: 0.85rem; color: var(--text-muted); }
+        .form-input { 
+            width: 100%; padding: 0.6rem; background: var(--bg-body); border: 1px solid var(--border); 
+            border-radius: 6px; color: var(--text-main); font-size: 0.9rem; 
+            transition: border 0.2s;
+        }
+        .form-input:focus { outline: none; border-color: var(--primary); }
+        
+        .logo-preview-box {
+            display: none; margin-top: 8px; align-items: center; gap: 10px;
+            background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px;
+        }
+        .logo-preview-box img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+        .logo-preview-text { font-size: 0.8rem; color: var(--success); }
+
+        .accounts-form-container {
+            display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;
+        }
+        .account-form-card {
+            background: rgba(0,0,0,0.2); border: 1px dashed var(--border);
+            padding: 1rem; border-radius: 8px; position: relative;
+        }
+        .account-form-card:hover { border-color: var(--text-muted); }
+        .account-form-card h4 { font-size: 0.85rem; margin-bottom: 0.75rem; color: var(--primary); display: flex; justify-content: space-between; }
+        .acc-inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        @media(max-width: 600px) { .acc-inputs-grid { grid-template-columns: 1fr; } }
+
+        .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.8rem; border-radius: 4px; border: none; cursor: pointer; pointer-events: auto; }
+        .btn-add-acc { 
+            width: 100%; padding: 0.75rem; background: rgba(99, 102, 241, 0.2); 
+            color: var(--primary); border: 1px dashed var(--primary); border-radius: 8px; 
+            cursor: pointer; margin-top: 0.5rem; transition: 0.2s; font-weight: 600;
+        }
+        .btn-add-acc:hover { background: rgba(99, 102, 241, 0.3); }
+        .btn-primary { background: var(--primary); color: white; padding: 0.6rem 1.2rem; border-radius: 6px; border: none; font-weight: 500; }
+        .btn-secondary { background: transparent; color: var(--text-muted); border: 1px solid var(--border); padding: 0.6rem 1.2rem; border-radius: 6px; }
+        .btn-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid transparent; padding: 0.6rem 1.2rem; border-radius: 6px; }
+
+        .toast { 
+            position: fixed; bottom: 20px; right: 20px; background: var(--bg-card); 
+            padding: 0.75rem 1rem; border-radius: 8px; border-left: 4px solid var(--success); 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 2000; animation: slideIn 0.3s; pointer-events: auto;
+        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .empty-state { grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted); }
+        
+        .fab { 
+            display: none; position: fixed; bottom: 20px; right: 20px; 
+            width: 60px; height: 60px; background: var(--primary); border-radius: 50%; 
+            color: white; align-items: center; justify-content: center; 
+            font-size: 1.5rem; box-shadow: 0 4px 15px rgba(99,102,241,0.5); 
+            border: none; z-index: 900; cursor: pointer;
+        }
+        .fab:hover { transform: scale(1.1); }
+        @media(max-width: 600px) { .btn-add-header { display: none; } .fab { display: flex; } }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="logo"><i class="fa-solid fa-layer-group"></i> Airdrop Hunter</div>
-        <button class="btn btn-primary" onclick="openModal()">+ Baru</button>
+        <div class="logo"><i class="fa-solid fa-layer-group"></i> Multi-Airdrop</div>
+        <button type="button" class="btn-add-header" id="btn-new-project">
+            <i class="fa-solid fa-plus"></i> Proyek Baru
+        </button>
     </header>
 
     <div class="container-max">
         <div class="stats-grid">
-            <div class="stat-box"><div style="color:var(--text-muted); font-size:0.8rem;">Proyek</div><div id="s-proj" style="font-size:1.5rem; font-weight:bold;">0</div></div>
-            <div class="stat-box"><div style="color:var(--text-muted); font-size:0.8rem;">Akun</div><div id="s-acc" style="font-size:1.5rem; font-weight:bold;">0</div></div>
+            <div class="stat-box"><div class="stat-lbl">Total Proyek</div><div class="stat-val" id="s-proj">0</div></div>
+            <div class="stat-box"><div class="stat-lbl">Total Akun</div><div class="stat-val" id="s-acc">0</div></div>
+            <div class="stat-box"><div class="stat-lbl">Proses</div><div class="stat-val" style="color:var(--warning)" id="s-proc">0</div></div>
+            <div class="stat-box"><div class="stat-lbl">Estimasi Value</div><div class="stat-val" style="color:var(--primary)" id="s-val">$0</div></div>
         </div>
-        <div id="project-list" class="card-grid"></div>
-    </div>
 
-    <div class="fab" onclick="openModal()"><i class="fa-solid fa-plus"></i></div>
+        <div class="filter-scroll" id="filter-container">
+            <div class="filter-chip active" onclick="setFilter('all')">Semua</div>
+            <div class="filter-chip" onclick="setFilter('Baru')">Belum Mulai</div>
+            <div class="filter-chip" onclick="setFilter('Proses')">Sedang Proses</div>
+            <div class="filter-chip" onclick="setFilter('Selesai')">Tugas Selesai</div>
+            <div class="filter-chip" onclick="setFilter('Claimed')">Sudah Claim</div>
+        </div>
 
-    <!-- Modal Form -->
-    <div class="modal" id="modal">
-        <div class="modal-content">
-            <h3 style="margin-bottom:15px;" id="m-title">Tambah Proyek</h3>
-            <input type="hidden" id="p-id">
-            
-            <div class="form-group"><label class="form-label">Nama Proyek</label><input type="text" id="p-name" class="form-input"></div>
-            <div class="form-group"><label class="form-label">Twitter (Auto Logo)</label><input type="text" id="p-twitter" class="form-input" oninput="previewLogo(this.value)"></div>
-            <div class="form-group"><label class="form-label">Status</label>
-                <select id="p-status" class="form-input">
-                    <option value="Baru">Baru</option><option value="Proses">Proses</option><option value="Selesai">Selesai</option><option value="Claimed">Claimed</option>
-                </select>
-            </div>
-            <div class="form-group"><label class="form-label">Tier/Nilai</label><input type="text" id="p-tier" class="form-input"></div>
-            <div class="form-group"><label class="form-label">Link</label><input type="text" id="p-link" class="form-input"></div>
-            
-            <hr style="border-color:var(--border); margin: 15px 0;">
-            <h4 style="margin-bottom:10px; font-size:0.9rem;">Akun Farming</h4>
-            <div id="acc-form-list"></div>
-            <button class="btn" style="width:100%; margin-top:10px; background:rgba(255,255,255,0.1); color:white;" onclick="addAccountRow()">+ Tambah Akun</button>
-
-            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
-                <button class="btn btn-danger" id="btn-del" style="display:none;" onclick="confirmDelete()">Hapus</button>
-                <button class="btn" style="background:transparent; color:var(--text-muted); border:1px solid var(--border);" onclick="closeModal()">Batal</button>
-                <button class="btn btn-primary" onclick="saveData()">Simpan</button>
-            </div>
+        <div class="card-grid" id="project-list">
+            <div class="empty-state">Memuat data...</div>
         </div>
     </div>
+
+    <button type="button" class="fab" id="fab-new-project"><i class="fa-solid fa-plus"></i></button>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="m-title">Tambah Proyek Airdrop</h3>
+                <button type="button" id="btn-close-modal" style="background:none;border:none;color:var(--text-muted);font-size:1.2rem;cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div id="p-form">
+                    <input type="hidden" id="p-id">
+                    <input type="hidden" id="p-logo-url">
+                    
+                    <div class="form-row">
+                        <label class="form-label">Nama Proyek</label>
+                        <input type="text" id="p-name" class="form-input" placeholder="Contoh: zkSync, LayerZero">
+                    </div>
+
+                    <div class="form-row">
+                        <label class="form-label">Twitter Proyek (Otomatis Ambil Logo)</label>
+                        <input type="text" id="p-twitter" class="form-input" placeholder="Contoh: @zksync atau zksync" oninput="handleTwitterInput(this.value)">
+                        <div id="logo-preview" class="logo-preview-box">
+                            <img id="preview-img" src="" alt="Logo Preview">
+                            <span class="logo-preview-text">Logo ditemukan!</span>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+                        <div class="form-row">
+                            <label class="form-label">Status</label>
+                            <select id="p-status" class="form-input">
+                                <option value="Baru">Belum Mulai</option>
+                                <option value="Proses">Proses</option>
+                                <option value="Selesai">Selesai</option>
+                                <option value="Claimed">Claimed</option>
+                            </select>
+                        </div>
+                        <div class="form-row">
+                            <label class="form-label">Estimasi / Tier</label>
+                            <input type="text" id="p-tier" class="form-input" placeholder="$500 / Tier 1">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <label class="form-label">Link Proyek</label>
+                        <input type="url" id="p-link" class="form-input" placeholder="https://...">
+                    </div>
+
+                    <div class="form-row">
+                        <label class="form-label">Catatan</label>
+                        <textarea id="p-notes" class="form-input" rows="2" placeholder="Progress global..."></textarea>
+                    </div>
+
+                    <hr style="border:0; border-top:1px solid var(--border); margin: 1rem 0;">
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <label class="form-label" style="margin:0;">Data Akun Farming</label>
+                        <button type="button" class="btn-sm btn-primary" onclick="addAccountRow()">+ Tambah Akun</button>
+                    </div>
+
+                    <div id="accounts-form-list" class="accounts-form-container"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-danger" id="btn-del" style="display:none;">Hapus Proyek</button>
+                <div style="flex-grow:1;"></div>
+                <button type="button" class="btn-secondary" id="btn-cancel">Batal</button>
+                <button type="button" class="btn-primary" id="btn-save">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-area"></div>
 
     <script>
-        // ==========================================
-        // KONFIGURASI PENTING: GANTI URL INI
-        // ==========================================
+        // --- GANTI BAGIAN INI ---
+        // Paste URL Web App Anda di bawah ini:
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz3AahpC4EzIE0aFe8A2oOD7WAlh8j0Qvt3HIzknN2gtCHPVF5kzIwx-x2BOMyaL2qx/exec'; 
-        // Ganti URL di atas dengan URL Web App Anda dari Langkah 2!
-        // ==========================================
+        // --------------------------
 
-        let projects = [];
-        let tempLogo = "";
-        let rowCount = 0;
+        let airdrops = [];
+        let currentFilter = 'all';
+        let rowCount = 0; 
+        let tempLogoUrl = "";
+        
+        let modal, formContainer;
 
-        // Load Data saat pertama buka
-        document.addEventListener('DOMContentLoaded', loadData);
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("DOM Ready - GitHub Version");
+            modal = document.getElementById('modal');
+            formContainer = document.getElementById('accounts-form-list');
 
+            document.getElementById('btn-new-project').addEventListener('click', () => openModal());
+            document.getElementById('fab-new-project').addEventListener('click', () => openModal());
+            document.getElementById('btn-close-modal').addEventListener('click', closeModal);
+            document.getElementById('btn-cancel').addEventListener('click', closeModal);
+            document.getElementById('btn-save').addEventListener('click', saveProject);
+            document.getElementById('btn-del').addEventListener('click', deleteProjectFromModal);
+            
+            modal.addEventListener('click', (e) => {
+                if(e.target === modal) closeModal();
+            });
+
+            // Load Data via Fetch
+            loadData();
+        });
+
+        // --- FETCH FUNCTIONS ---
+        
         async function loadData() {
             try {
-                const res = await fetch(`${SCRIPT_URL}?action=getAirdrops`);
-                const data = await res.json();
-                projects = data; // Data langsung array project
-                renderProjects();
+                const response = await fetch(`${SCRIPT_URL}?action=getAirdrops`);
+                const data = await response.json();
+                
+                if(Array.isArray(data)) {
+                    airdrops = data;
+                    renderProjects();
+                } else {
+                    console.error("Format data salah:", data);
+                    document.getElementById('project-list').innerHTML = '<div class="empty-state">Gagal memuat format data.</div>';
+                }
             } catch (e) {
-                console.error("Gagal load data", e);
-                alert("Gagal mengambil data. Cek Console (F12).");
+                console.error("Gagal mengambil data:", e);
+                document.getElementById('project-list').innerHTML = '<div class="empty-state">Gagal koneksi ke Server. Pastikan URL SCRIPT_URL sudah benar.</div>';
+            }
+        }
+
+        async function sendToGAS(action, payload) {
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: action, ...payload })
+                });
+                const result = await response.json();
+                return result;
+            } catch (e) {
+                console.error("Gagal mengirim data:", e);
+                throw e;
+            }
+        }
+
+        // --- LOGIC UI ---
+
+        function handleTwitterInput(val) {
+            const previewBox = document.getElementById('logo-preview');
+            const previewImg = document.getElementById('preview-img');
+            const cleanVal = val.replace('@', '').trim().split('/').pop();
+
+            if (cleanVal.length > 2) {
+                const url = `https://unavatar.io/twitter/${cleanVal}`;
+                previewImg.src = url;
+                previewBox.style.display = 'flex';
+                tempLogoUrl = url;
+            } else {
+                previewBox.style.display = 'none';
+                tempLogoUrl = "";
             }
         }
 
         function renderProjects() {
             const list = document.getElementById('project-list');
             list.innerHTML = '';
-            let totalAcc = 0;
-
-            projects.forEach(p => {
-                totalAcc += (p.accounts ? p.accounts.length : 0);
-                const logo = p.logoUrl ? `<img src="${p.logoUrl}" class="p-logo">` : `<div class="p-logo" style="display:flex;align-items:center;justify-content:center;background:#333;"><i class="fa-solid fa-robot"></i></div>`;
-                
-                let accHtml = '';
-                if(p.accounts) {
-                    p.accounts.forEach((a, i) => {
-                        accHtml += `<div class="acc-row"><div class="acc-num">AKUN ${i+1}</div><div style="display:flex;gap:5px;flex-wrap:wrap;">`;
-                        if(a.wallet) accHtml += `<span class="data-chip" onclick="copy('${a.wallet}')"><i class="fa-solid fa-wallet"></i> ${short(a.wallet)}</span>`;
-                        if(a.email) accHtml += `<span class="data-chip" onclick="copy('${a.email}')"><i class="fa-solid fa-envelope"></i> ${a.email}</span>`;
-                        if(a.twitter) accHtml += `<span class="data-chip" onclick="copy('${a.twitter}')"><i class="fa-brands fa-twitter"></i> ${a.twitter}</span>`;
-                        accHtml += `</div></div>`;
-                    });
-                }
-
-                const card = document.createElement('div');
-                card.className = 'p-card';
-                card.innerHTML = `
-                    <div class="p-header">${logo} <div>
-                        <div style="font-weight:bold;">${p.name}</div>
-                        <div style="font-size:0.8rem; color:var(--text-muted);">${p.status} • ${p.tier || '-'} • ${p.accounts ? p.accounts.length : 0} Akun</div>
-                    </div></div>
-                    <div class="acc-list">${accHtml || '<div style="padding:10px; text-align:center; font-size:0.8rem; color:var(--text-muted);">Tidak ada akun</div>'}</div>
-                    <div style="padding:10px; border-top:1px solid var(--border); display:flex; justify-content:space-between;">
-                        <div style="font-size:0.8rem; color:var(--text-muted); font-style:italic;">${p.notes || ''}</div>
-                        <button class="btn" style="background:none; color:var(--text-muted);" onclick="editProject(${p.id})"><i class="fa-solid fa-pen"></i></button>
-                    </div>
-                `;
-                list.appendChild(card);
-            });
-            document.getElementById('s-proj').innerText = projects.length;
-            document.getElementById('s-acc').innerText = totalAcc;
-        }
-
-        // --- CRUD FUNCTIONS ---
-        async function saveData() {
-            const id = document.getElementById('p-id').value;
-            const name = document.getElementById('p-name').value;
-            if(!name) return alert("Nama wajib diisi!");
-
-            // Kumpulkan data akun
-            const accounts = [];
-            document.querySelectorAll('.acc-row-form').forEach(row => {
-                const acc = {
-                    wallet: row.querySelector('.inp-w').value,
-                    email: row.querySelector('.inp-e').value,
-                    twitter: row.querySelector('.inp-t').value,
-                    discord: row.querySelector('.inp-d').value,
-                    telegram: row.querySelector('.inp-te').value
-                };
-                if(acc.wallet || acc.email) accounts.push(acc);
-            });
-
-            const project = {
-                id: id ? id : Date.now(),
-                name: name,
-                twitter: document.getElementById('p-twitter').value,
-                logoUrl: tempLogo,
-                status: document.getElementById('p-status').value,
-                tier: document.getElementById('p-tier').value,
-                link: document.getElementById('p-link').value,
-                notes: "",
-                accounts: accounts
-            };
-
-            // Kirim ke GAS via POST
-            await fetch(SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'saveAirdrop', project: project })
-            });
-
-            closeModal();
-            loadData(); // Refresh
-        }
-
-        async function confirmDelete() {
-            const id = document.getElementById('p-id').value;
-            if(!confirm("Hapus proyek ini?")) return;
             
-            await fetch(SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'deleteAirdrop', id: id })
-            });
+            let totalAcc = 0;
+            let totalVal = 0;
+            let procCount = 0;
 
-            closeModal();
-            loadData();
+            const filtered = airdrops.filter(p => currentFilter === 'all' || p.status === currentFilter);
+
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="empty-state">Belum ada data proyek.</div>';
+            } else {
+                filtered.forEach(p => {
+                    totalAcc += (p.accounts ? p.accounts.length : 0);
+                    if(p.status === 'Proses') procCount++;
+                    const match = p.tier ? p.tier.match(/\$(\d+)/) : null;
+                    if(match) totalVal += (parseInt(match[1]) * (p.accounts ? p.accounts.length : 1));
+
+                    const badgeClass = p.status === 'Baru' ? 'new' : (p.status === 'Proses' ? 'process' : (p.status === 'Selesai' ? 'done' : 'claimed'));
+                    const logoHtml = p.logoUrl 
+                        ? `<img src="${p.logoUrl}" class="p-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'"><i class="fa-solid fa-robot fa-lg" style="display:none; color:var(--text-muted);"></i>`
+                        : `<i class="fa-solid fa-robot fa-lg" style="color:var(--text-muted); width:40px; text-align:center;"></i>`;
+
+                    let accountsHtml = '';
+                    if (p.accounts && p.accounts.length > 0) {
+                        p.accounts.forEach((acc, idx) => {
+                            let chips = '';
+                            if(acc.wallet) chips += `<div class="data-chip" onclick="copyText('${acc.wallet}')"><i class="fa-solid fa-wallet"></i><span class="val-text">${shorten(acc.wallet)}</span></div>`;
+                            if(acc.email) chips += `<div class="data-chip" onclick="copyText('${acc.email}')"><i class="fa-solid fa-envelope"></i><span class="val-text">${shorten(acc.email, 10)}</span></div>`;
+                            if(acc.twitter) chips += `<div class="data-chip" onclick="copyText('${acc.twitter}')"><i class="fa-brands fa-twitter"></i><span class="val-text">${acc.twitter}</span></div>`;
+                            if(acc.discord) chips += `<div class="data-chip" onclick="copyText('${acc.discord}')"><i class="fa-brands fa-discord"></i><span class="val-text">${acc.discord}</span></div>`;
+                            if(acc.telegram) chips += `<div class="data-chip" onclick="copyText('${acc.telegram}')"><i class="fa-brands fa-telegram"></i><span class="val-text">${acc.telegram}</span></div>`;
+
+                            accountsHtml += `<div class="acc-row"><div class="acc-num">AKUN<br>${idx + 1}</div><div class="acc-details">${chips || '<span style="color:var(--text-muted); opacity:0.5;">Data kosong</span>'}</div></div>`;
+                        });
+                    } else {
+                        accountsHtml = '<div style="padding:1rem; text-align:center; color:var(--text-muted); font-size:0.8rem;">Belum ada akun ditambahkan</div>';
+                    }
+
+                    const card = document.createElement('div');
+                    card.className = 'p-card';
+                    card.innerHTML = `
+                        <div class="p-header">
+                            <div class="p-title">${logoHtml}<div><h3>${p.name}</h3><div class="p-meta"><span class="badge ${badgeClass}">${p.status}</span><span style="margin-left:5px;"><i class="fa-solid fa-layer-group"></i> ${p.accounts ? p.accounts.length : 0} Akun</span><span style="margin-left:5px;"><i class="fa-solid fa-coins"></i> ${p.tier || '-'}</span></div></div></div>
+                        </div>
+                        <div class="acc-list">${accountsHtml}</div>
+                        <div class="p-footer">
+                            <div class="p-notes">${p.notes || ''}</div>
+                            <div class="p-actions">
+                                ${p.link ? `<a href="${p.link}" target="_blank" style="color:var(--primary); margin-right:10px; text-decoration:none;"><i class="fa-solid fa-external-link-alt"></i></a>` : ''}
+                                <button type="button" onclick="editProject(${p.id})"><i class="fa-solid fa-pen"></i></button>
+                                <button type="button" class="del" onclick="deleteProjectDirect(${p.id})"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>`;
+                    list.appendChild(card);
+                });
+            }
+
+            document.getElementById('s-proj').innerText = airdrops.length;
+            document.getElementById('s-acc').innerText = totalAcc;
+            document.getElementById('s-proc').innerText = procCount;
+            document.getElementById('s-val').innerText = '$' + totalVal.toLocaleString();
         }
 
-        // --- UI HELPERS ---
         function openModal(isEdit = false) {
-            document.getElementById('modal').classList.add('open');
+            if(!modal) return;
+            modal.classList.add('open');
             if(!isEdit) {
+                rowCount = 0; tempLogoUrl = ""; 
                 document.getElementById('p-name').value = ''; document.getElementById('p-id').value = '';
                 document.getElementById('p-twitter').value = ''; document.getElementById('p-status').value = 'Baru';
                 document.getElementById('p-tier').value = ''; document.getElementById('p-link').value = '';
-                document.getElementById('m-title').innerText = "Tambah Proyek";
-                document.getElementById('btn-del').style.display = 'none';
-                document.getElementById('acc-form-list').innerHTML = ''; rowCount = 0; addAccountRow();
+                document.getElementById('p-notes').value = ''; document.getElementById('m-title').innerText = 'Tambah Proyek Baru';
+                document.getElementById('btn-del').style.display = 'none'; document.getElementById('logo-preview').style.display = 'none'; 
+                formContainer.innerHTML = ''; addAccountRow(); 
             }
         }
-        function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+        function closeModal() { if(modal) modal.classList.remove('open'); }
 
         function addAccountRow(data = null) {
             rowCount++;
             const div = document.createElement('div');
-            div.className = 'acc-row-form';
-            div.style.marginBottom = "10px";
+            div.className = 'account-form-card'; div.id = `acc-row-${rowCount}`;
+            const w = data ? data.wallet : ''; const e = data ? data.email : '';
+            const tw = data ? data.twitter : ''; const dc = data ? data.discord : ''; const tg = data ? data.telegram : '';
+
             div.innerHTML = `
-                <div style="font-size:0.8rem; font-weight:bold; color:var(--primary); margin-bottom:5px; display:flex; justify-content:space-between;">
-                    Akun #${rowCount} <i class="fa-solid fa-trash" style="cursor:pointer; color:var(--danger);" onclick="this.parentElement.parentElement.remove()"></i>
-                </div>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-                    <input class="form-input inp-w" placeholder="Wallet" value="${data?.wallet||''}">
-                    <input class="form-input inp-e" placeholder="Email" value="${data?.email||''}">
-                    <input class="form-input inp-t" placeholder="Twitter" value="${data?.twitter||''}">
-                    <input class="form-input inp-d" placeholder="Discord" value="${data?.discord||''}">
-                    <input class="form-input inp-te" placeholder="Telegram" style="grid-column:1/-1" value="${data?.telegram||''}">
-                </div>
-            `;
-            document.getElementById('acc-form-list').appendChild(div);
+                <h4><span>Data Akun #${rowCount}</span><button type="button" class="btn-sm" style="color:var(--danger); background:none;" onclick="removeAccountRow('acc-row-${rowCount}')"><i class="fa-solid fa-trash"></i></button></h4>
+                <div class="acc-inputs-grid">
+                    <div><label class="form-label" style="font-size:0.75rem;">Wallet</label><input type="text" class="form-input inp-wallet" value="${w}" placeholder="0x..." style="font-family:'JetBrains Mono'; font-size:0.85rem;"></div>
+                    <div><label class="form-label" style="font-size:0.75rem;">Email</label><input type="text" class="form-input inp-email" value="${e}" placeholder="email..."></div>
+                    <div><label class="form-label" style="font-size:0.75rem;">Twitter (X)</label><input type="text" class="form-input inp-twitter" value="${tw}" placeholder="@user"></div>
+                    <div><label class="form-label" style="font-size:0.75rem;">Discord</label><input type="text" class="form-input inp-discord" value="${dc}" placeholder="User#1234"></div>
+                    <div style="grid-column: 1/-1;"><label class="form-label" style="font-size:0.75rem;">Telegram</label><input type="text" class="form-input inp-telegram" value="${tg}" placeholder="@username"></div>
+                </div>`;
+            formContainer.appendChild(div);
+        }
+
+        function removeAccountRow(id) { const row = document.getElementById(id); if(row) row.remove(); }
+
+        // --- SAVE & DELETE FUNCTION ---
+
+        async function saveProject() {
+            const id = document.getElementById('p-id').value;
+            const name = document.getElementById('p-name').value;
+            if(!name) { showToast('Nama proyek wajib diisi!', 'danger'); return; }
+
+            const accounts = [];
+            const rows = formContainer.querySelectorAll('.account-form-card');
+            rows.forEach(row => {
+                const acc = { wallet: row.querySelector('.inp-wallet').value, email: row.querySelector('.inp-email').value, twitter: row.querySelector('.inp-twitter').value, discord: row.querySelector('.inp-discord').value, telegram: row.querySelector('.inp-telegram').value };
+                if(acc.wallet || acc.email || acc.twitter || acc.discord || acc.telegram) accounts.push(acc);
+            });
+
+            const projectData = { id: id ? id : Date.now(), name: name, twitter: document.getElementById('p-twitter').value.replace('@','').trim(), logoUrl: tempLogoUrl, status: document.getElementById('p-status').value, tier: document.getElementById('p-tier').value, link: document.getElementById('p-link').value, notes: document.getElementById('p-notes').value, accounts: accounts };
+
+            try {
+                await sendToGAS('saveAirdrop', { project: projectData });
+                showToast('Sukses disimpan!');
+                closeModal();
+                loadData();
+            } catch (e) {
+                showToast('Gagal menyimpan', 'danger');
+            }
+        }
+
+        async function deleteProjectDirect(id) {
+            if(!confirm('Hapus proyek ini?')) return;
+            try {
+                await sendToGAS('deleteAirdrop', { id: id });
+                showToast('Sukses dihapus', 'danger');
+                loadData();
+            } catch (e) {
+                showToast('Gagal menghapus', 'danger');
+            }
+        }
+
+        async function deleteProjectFromModal() {
+            const id = document.getElementById('p-id').value;
+            if(!confirm('Hapus proyek ini beserta semua data akunnya?')) return;
+            try {
+                await sendToGAS('deleteAirdrop', { id: id });
+                showToast('Sukses dihapus', 'danger');
+                closeModal();
+                loadData();
+            } catch (e) {
+                showToast('Gagal menghapus', 'danger');
+            }
         }
 
         function editProject(id) {
-            const p = projects.find(x => x.id == id);
-            if(!p) return;
-            document.getElementById('p-id').value = p.id;
-            document.getElementById('p-name').value = p.name;
-            document.getElementById('p-twitter').value = p.twitter || '';
-            document.getElementById('p-status').value = p.status;
-            document.getElementById('p-tier').value = p.tier || '';
-            document.getElementById('p-link').value = p.link || '';
-            document.getElementById('m-title').innerText = "Edit Proyek";
-            document.getElementById('btn-del').style.display = 'block';
-            
-            document.getElementById('acc-form-list').innerHTML = ''; rowCount = 0;
-            if(p.accounts && p.accounts.length > 0) p.accounts.forEach(acc => addAccountRow(acc));
-            else addAccountRow();
-            
-            openModal(true);
+            const p = airdrops.find(item => item.id == id); if(!p) return;
+            document.getElementById('p-id').value = p.id; document.getElementById('p-name').value = p.name; document.getElementById('p-twitter').value = p.twitter || ''; tempLogoUrl = p.logoUrl || '';
+            if(p.logoUrl) { document.getElementById('preview-img').src = p.logoUrl; document.getElementById('logo-preview').style.display = 'flex'; } else { document.getElementById('logo-preview').style.display = 'none'; }
+            document.getElementById('p-status').value = p.status; document.getElementById('p-tier').value = p.tier; document.getElementById('p-link').value = p.link; document.getElementById('p-notes').value = p.notes;
+            document.getElementById('m-title').innerText = 'Edit Proyek'; document.getElementById('btn-del').style.display = 'block';
+            formContainer.innerHTML = ''; rowCount = 0; if(p.accounts && p.accounts.length > 0) { p.accounts.forEach(acc => addAccountRow(acc)); } else { addAccountRow(); } openModal(true);
         }
 
-        function previewLogo(val) {
-            const clean = val.replace('@','').trim();
-            if(clean.length > 2) tempLogo = `https://unavatar.io/twitter/${clean}`;
-            else tempLogo = "";
+        function setFilter(f) {
+            currentFilter = f; document.querySelectorAll('.filter-chip').forEach(c => { c.classList.remove('active'); if(c.innerText.includes(f) || (f==='all' && c.innerText==='Semua')) c.classList.add('active'); }); renderProjects();
         }
 
-        function copy(t) { navigator.clipboard.writeText(t); alert("Disalin!"); }
-        function short(t) { return t.substring(0,6) + '...' + t.substring(t.length-4); }
+        function shorten(str, len=6) { if(!str) return ''; if(str.length <= len) return str; if(str.startsWith('0x')) return str.substring(0,6) + '...' + str.substring(str.length-4); return str.substring(0,len) + '...'; }
+        function copyText(text) { if(!text) return; navigator.clipboard.writeText(text).then(() => showToast('Disalin: ' + text)); }
+        function showToast(msg, type='success') { const t = document.createElement('div'); t.className = 'toast'; t.style.borderLeftColor = type === 'danger' ? 'var(--danger)' : 'var(--success)'; t.innerHTML = msg; document.getElementById('toast-area').appendChild(t); setTimeout(() => t.remove(), 3000); }
     </script>
 </body>
 </html>
