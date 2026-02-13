@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Airdrop Hunter (GitHub Version)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #0f172a; --bg-card: #1e293b; --bg-modal: #1e293b;
+            --text-main: #f1f5f9; --text-muted: #94a3b8; --primary: #6366f1;
+            --success: #10b981; --warning: #f59e0b; --danger: #ef4444;
+            --border: #334155; --radius: 12px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-body); color: var(--text-main); min-height: 100vh; padding-bottom: 80px; }
+        header { background: rgba(30, 41, 59, 0.95); backdrop-filter: blur(10px); padding: 1rem 1.5rem; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.25rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 0.5rem; }
+        .container-max { max-width: 1200px; margin: 0 auto; width: 100%; padding: 0 1.5rem; }
+        .btn { cursor: pointer; padding: 0.5rem 1rem; border-radius: 8px; border: none; font-weight: 600; transition: 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-danger { background: rgba(239,68,68,0.2); color: var(--danger); border: 1px solid var(--danger); }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; padding: 1.5rem 0; }
+        .stat-box { background: var(--bg-card); padding: 1rem; border-radius: var(--radius); border: 1px solid var(--border); }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem; padding-bottom: 2rem; }
+        .p-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; }
+        .p-header { padding: 1rem; border-bottom: 1px solid var(--border); display: flex; gap: 10px; align-items: center; }
+        .p-logo { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: #333; }
+        .acc-list { max-height: 250px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 0.5rem; }
+        .acc-row { display: grid; grid-template-columns: 30px 1fr; gap: 10px; padding: 5px; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center; font-size: 0.8rem; }
+        .acc-num { font-weight: bold; color: var(--text-muted); font-size: 0.7rem; }
+        .data-chip { background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; cursor: pointer; margin: 2px; display: inline-flex; align-items: center; gap: 5px; }
+        .data-chip:hover { background: var(--primary); }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .modal.open { opacity: 1; pointer-events: auto; }
+        .modal-content { background: var(--bg-card); width: 90%; max-width: 500px; padding: 20px; border-radius: 12px; max-height: 90vh; overflow-y: auto; }
+        .form-group { margin-bottom: 10px; }
+        .form-label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px; }
+        .form-input { width: 100%; padding: 8px; background: var(--bg-body); border: 1px solid var(--border); color: white; border-radius: 6px; }
+        .fab { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.5); cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo"><i class="fa-solid fa-layer-group"></i> Airdrop Hunter</div>
+        <button class="btn btn-primary" onclick="openModal()">+ Baru</button>
+    </header>
+
+    <div class="container-max">
+        <div class="stats-grid">
+            <div class="stat-box"><div style="color:var(--text-muted); font-size:0.8rem;">Proyek</div><div id="s-proj" style="font-size:1.5rem; font-weight:bold;">0</div></div>
+            <div class="stat-box"><div style="color:var(--text-muted); font-size:0.8rem;">Akun</div><div id="s-acc" style="font-size:1.5rem; font-weight:bold;">0</div></div>
+        </div>
+        <div id="project-list" class="card-grid"></div>
+    </div>
+
+    <div class="fab" onclick="openModal()"><i class="fa-solid fa-plus"></i></div>
+
+    <!-- Modal Form -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom:15px;" id="m-title">Tambah Proyek</h3>
+            <input type="hidden" id="p-id">
+            
+            <div class="form-group"><label class="form-label">Nama Proyek</label><input type="text" id="p-name" class="form-input"></div>
+            <div class="form-group"><label class="form-label">Twitter (Auto Logo)</label><input type="text" id="p-twitter" class="form-input" oninput="previewLogo(this.value)"></div>
+            <div class="form-group"><label class="form-label">Status</label>
+                <select id="p-status" class="form-input">
+                    <option value="Baru">Baru</option><option value="Proses">Proses</option><option value="Selesai">Selesai</option><option value="Claimed">Claimed</option>
+                </select>
+            </div>
+            <div class="form-group"><label class="form-label">Tier/Nilai</label><input type="text" id="p-tier" class="form-input"></div>
+            <div class="form-group"><label class="form-label">Link</label><input type="text" id="p-link" class="form-input"></div>
+            
+            <hr style="border-color:var(--border); margin: 15px 0;">
+            <h4 style="margin-bottom:10px; font-size:0.9rem;">Akun Farming</h4>
+            <div id="acc-form-list"></div>
+            <button class="btn" style="width:100%; margin-top:10px; background:rgba(255,255,255,0.1); color:white;" onclick="addAccountRow()">+ Tambah Akun</button>
+
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+                <button class="btn btn-danger" id="btn-del" style="display:none;" onclick="confirmDelete()">Hapus</button>
+                <button class="btn" style="background:transparent; color:var(--text-muted); border:1px solid var(--border);" onclick="closeModal()">Batal</button>
+                <button class="btn btn-primary" onclick="saveData()">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // KONFIGURASI PENTING: GANTI URL INI
+        // ==========================================
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz3AahpC4EzIE0aFe8A2oOD7WAlh8j0Qvt3HIzknN2gtCHPVF5kzIwx-x2BOMyaL2qx/exec'; 
+        // Ganti URL di atas dengan URL Web App Anda dari Langkah 2!
+        // ==========================================
+
+        let projects = [];
+        let tempLogo = "";
+        let rowCount = 0;
+
+        // Load Data saat pertama buka
+        document.addEventListener('DOMContentLoaded', loadData);
+
+        async function loadData() {
+            try {
+                const res = await fetch(`${SCRIPT_URL}?action=getAirdrops`);
+                const data = await res.json();
+                projects = data; // Data langsung array project
+                renderProjects();
+            } catch (e) {
+                console.error("Gagal load data", e);
+                alert("Gagal mengambil data. Cek Console (F12).");
+            }
+        }
+
+        function renderProjects() {
+            const list = document.getElementById('project-list');
+            list.innerHTML = '';
+            let totalAcc = 0;
+
+            projects.forEach(p => {
+                totalAcc += (p.accounts ? p.accounts.length : 0);
+                const logo = p.logoUrl ? `<img src="${p.logoUrl}" class="p-logo">` : `<div class="p-logo" style="display:flex;align-items:center;justify-content:center;background:#333;"><i class="fa-solid fa-robot"></i></div>`;
+                
+                let accHtml = '';
+                if(p.accounts) {
+                    p.accounts.forEach((a, i) => {
+                        accHtml += `<div class="acc-row"><div class="acc-num">AKUN ${i+1}</div><div style="display:flex;gap:5px;flex-wrap:wrap;">`;
+                        if(a.wallet) accHtml += `<span class="data-chip" onclick="copy('${a.wallet}')"><i class="fa-solid fa-wallet"></i> ${short(a.wallet)}</span>`;
+                        if(a.email) accHtml += `<span class="data-chip" onclick="copy('${a.email}')"><i class="fa-solid fa-envelope"></i> ${a.email}</span>`;
+                        if(a.twitter) accHtml += `<span class="data-chip" onclick="copy('${a.twitter}')"><i class="fa-brands fa-twitter"></i> ${a.twitter}</span>`;
+                        accHtml += `</div></div>`;
+                    });
+                }
+
+                const card = document.createElement('div');
+                card.className = 'p-card';
+                card.innerHTML = `
+                    <div class="p-header">${logo} <div>
+                        <div style="font-weight:bold;">${p.name}</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted);">${p.status} • ${p.tier || '-'} • ${p.accounts ? p.accounts.length : 0} Akun</div>
+                    </div></div>
+                    <div class="acc-list">${accHtml || '<div style="padding:10px; text-align:center; font-size:0.8rem; color:var(--text-muted);">Tidak ada akun</div>'}</div>
+                    <div style="padding:10px; border-top:1px solid var(--border); display:flex; justify-content:space-between;">
+                        <div style="font-size:0.8rem; color:var(--text-muted); font-style:italic;">${p.notes || ''}</div>
+                        <button class="btn" style="background:none; color:var(--text-muted);" onclick="editProject(${p.id})"><i class="fa-solid fa-pen"></i></button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+            document.getElementById('s-proj').innerText = projects.length;
+            document.getElementById('s-acc').innerText = totalAcc;
+        }
+
+        // --- CRUD FUNCTIONS ---
+        async function saveData() {
+            const id = document.getElementById('p-id').value;
+            const name = document.getElementById('p-name').value;
+            if(!name) return alert("Nama wajib diisi!");
+
+            // Kumpulkan data akun
+            const accounts = [];
+            document.querySelectorAll('.acc-row-form').forEach(row => {
+                const acc = {
+                    wallet: row.querySelector('.inp-w').value,
+                    email: row.querySelector('.inp-e').value,
+                    twitter: row.querySelector('.inp-t').value,
+                    discord: row.querySelector('.inp-d').value,
+                    telegram: row.querySelector('.inp-te').value
+                };
+                if(acc.wallet || acc.email) accounts.push(acc);
+            });
+
+            const project = {
+                id: id ? id : Date.now(),
+                name: name,
+                twitter: document.getElementById('p-twitter').value,
+                logoUrl: tempLogo,
+                status: document.getElementById('p-status').value,
+                tier: document.getElementById('p-tier').value,
+                link: document.getElementById('p-link').value,
+                notes: "",
+                accounts: accounts
+            };
+
+            // Kirim ke GAS via POST
+            await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'saveAirdrop', project: project })
+            });
+
+            closeModal();
+            loadData(); // Refresh
+        }
+
+        async function confirmDelete() {
+            const id = document.getElementById('p-id').value;
+            if(!confirm("Hapus proyek ini?")) return;
+            
+            await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'deleteAirdrop', id: id })
+            });
+
+            closeModal();
+            loadData();
+        }
+
+        // --- UI HELPERS ---
+        function openModal(isEdit = false) {
+            document.getElementById('modal').classList.add('open');
+            if(!isEdit) {
+                document.getElementById('p-name').value = ''; document.getElementById('p-id').value = '';
+                document.getElementById('p-twitter').value = ''; document.getElementById('p-status').value = 'Baru';
+                document.getElementById('p-tier').value = ''; document.getElementById('p-link').value = '';
+                document.getElementById('m-title').innerText = "Tambah Proyek";
+                document.getElementById('btn-del').style.display = 'none';
+                document.getElementById('acc-form-list').innerHTML = ''; rowCount = 0; addAccountRow();
+            }
+        }
+        function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+        function addAccountRow(data = null) {
+            rowCount++;
+            const div = document.createElement('div');
+            div.className = 'acc-row-form';
+            div.style.marginBottom = "10px";
+            div.innerHTML = `
+                <div style="font-size:0.8rem; font-weight:bold; color:var(--primary); margin-bottom:5px; display:flex; justify-content:space-between;">
+                    Akun #${rowCount} <i class="fa-solid fa-trash" style="cursor:pointer; color:var(--danger);" onclick="this.parentElement.parentElement.remove()"></i>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                    <input class="form-input inp-w" placeholder="Wallet" value="${data?.wallet||''}">
+                    <input class="form-input inp-e" placeholder="Email" value="${data?.email||''}">
+                    <input class="form-input inp-t" placeholder="Twitter" value="${data?.twitter||''}">
+                    <input class="form-input inp-d" placeholder="Discord" value="${data?.discord||''}">
+                    <input class="form-input inp-te" placeholder="Telegram" style="grid-column:1/-1" value="${data?.telegram||''}">
+                </div>
+            `;
+            document.getElementById('acc-form-list').appendChild(div);
+        }
+
+        function editProject(id) {
+            const p = projects.find(x => x.id == id);
+            if(!p) return;
+            document.getElementById('p-id').value = p.id;
+            document.getElementById('p-name').value = p.name;
+            document.getElementById('p-twitter').value = p.twitter || '';
+            document.getElementById('p-status').value = p.status;
+            document.getElementById('p-tier').value = p.tier || '';
+            document.getElementById('p-link').value = p.link || '';
+            document.getElementById('m-title').innerText = "Edit Proyek";
+            document.getElementById('btn-del').style.display = 'block';
+            
+            document.getElementById('acc-form-list').innerHTML = ''; rowCount = 0;
+            if(p.accounts && p.accounts.length > 0) p.accounts.forEach(acc => addAccountRow(acc));
+            else addAccountRow();
+            
+            openModal(true);
+        }
+
+        function previewLogo(val) {
+            const clean = val.replace('@','').trim();
+            if(clean.length > 2) tempLogo = `https://unavatar.io/twitter/${clean}`;
+            else tempLogo = "";
+        }
+
+        function copy(t) { navigator.clipboard.writeText(t); alert("Disalin!"); }
+        function short(t) { return t.substring(0,6) + '...' + t.substring(t.length-4); }
+    </script>
+</body>
+</html>
